@@ -1,12 +1,5 @@
 local Players = game:GetService("Players")
 local player = Players.LocalPlayer
-CoinCollectedEvent = game.ReplicatedStorage.Remotes.Gameplay.CoinCollected
-CurrentCoinType = "BeachBall"
-CoinCollectedEvent.OnClientEvent:Connect(function(cointype, current, max)
-    if cointype == CurrentCoinType and tonumber(current) == tonumber(max) then
-           Player.Character.Humanoid.Health = 0
-	end
-end)
 
 local sourceLabel = player:WaitForChild("PlayerGui")
     :WaitForChild("CrossPlatform")
@@ -40,6 +33,15 @@ fullLabel.Text = sourceLabel.Text
 fullLabel.Parent = screenGui
 sourceLabel:GetPropertyChangedSignal("Text"):Connect(function()
     fullLabel.Text = sourceLabel.Text
+end)
+Player = game.Players.LocalPlayer
+Players = game.Players
+CoinCollectedEvent = game.ReplicatedStorage.Remotes.Gameplay.CoinCollected
+CurrentCoinType = "BeachBall"
+CoinCollectedEvent.OnClientEvent:Connect(function(cointype, current, max)
+    if cointype == CurrentCoinType and tonumber(current) == tonumber(max) then
+           Player.Character.Humanoid.Health = 0
+	end
 end)
 repeat task.wait() until game:IsLoaded() and game.Players.LocalPlayer
 print("Load 1st")
@@ -104,7 +106,7 @@ task.spawn(function()
 end)
 
 local TweenService = game:GetService("TweenService")
-local speed = 40
+local speed = 25
 
 task.spawn(function()
     while true do
