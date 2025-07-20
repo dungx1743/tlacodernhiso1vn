@@ -1,0 +1,163 @@
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+CoinCollectedEvent = game.ReplicatedStorage.Remotes.Gameplay.CoinCollected
+CurrentCoinType = "BeachBall"
+CoinCollectedEvent.OnClientEvent:Connect(function(cointype, current, max)
+    if cointype == CurrentCoinType and tonumber(current) == tonumber(max) then
+           Player.Character.Humanoid.Health = 0
+	end
+end)
+
+local sourceLabel = player:WaitForChild("PlayerGui")
+    :WaitForChild("CrossPlatform")
+    :WaitForChild("Summer2025")
+    :WaitForChild("Container")
+    :WaitForChild("EventFrames")
+    :WaitForChild("BattlePass")
+    :WaitForChild("Info")
+    :WaitForChild("Tokens")
+    :WaitForChild("Container")
+    :WaitForChild("TextLabel")
+
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "FullscreenTextDisplay"
+screenGui.ResetOnSpawn = false
+screenGui.IgnoreGuiInset = true
+screenGui.DisplayOrder = 1000
+screenGui.Parent = player:WaitForChild("PlayerGui")
+
+local fullLabel = Instance.new("TextLabel")
+fullLabel.Size = UDim2.new(1, 0, 1, 0)
+fullLabel.Position = UDim2.new(0, 0, 0, 0)
+fullLabel.BackgroundColor3 = Color3.new(0, 0, 0)
+fullLabel.BackgroundTransparency = 0.3
+fullLabel.TextColor3 = Color3.new(1, 1, 1)
+fullLabel.TextStrokeTransparency = 0.5
+fullLabel.Font = Enum.Font.GothamBold
+fullLabel.TextScaled = true
+fullLabel.TextWrapped = true
+fullLabel.Text = sourceLabel.Text
+fullLabel.Parent = screenGui
+sourceLabel:GetPropertyChangedSignal("Text"):Connect(function()
+    fullLabel.Text = sourceLabel.Text
+end)
+repeat task.wait() until game:IsLoaded() and game.Players.LocalPlayer
+print("Load 1st")
+local waitload = game:GetService("Players").LocalPlayer:WaitForChild("PlayerGui"):WaitForChild("DeviceSelect"):WaitForChild("Container"):WaitForChild("Phone")
+repeat task.wait() until waitload
+print("Device Select Loaded")
+wait(1)
+local playerGui = game:GetService("Players").LocalPlayer.PlayerGui
+local deviceSelect = playerGui:FindFirstChild("DeviceSelect")
+if deviceSelect then
+    local button = deviceSelect.Container.Tablet:FindFirstChild("Button")
+    if button then
+        for _, v in ipairs(getconnections(button.MouseButton1Click)) do
+            if v.Function then
+                v.Function()
+            end
+        end
+    end
+end
+local gameload = playerGui:FindFirstChild("Loading")
+repeat task.wait() until not gameload
+print("Game Loaded")
+wait(0.1)
+local lib = loadstring(game:HttpGet("https://raw.githubusercontent.com/Turtle-Brand/Turtle-Lib/main/source.lua"))()
+local w = lib:Window("MM2 Summer")
+
+local plr = game.Players.LocalPlayer
+local character = plr.Character or plr.CharacterAdded:Wait()
+local humPart = character:WaitForChild("HumanoidRootPart")
+
+plr.CharacterAdded:Connect(function(char)
+    character = char
+    humPart = char:WaitForChild("HumanoidRootPart")
+end)
+
+local map
+game.Workspace.DescendantAdded:Connect(function(m)
+    if m:IsA("Model") and m.Name == "CoinContainer" then
+        map = m
+    end
+end)
+
+local delay = 1
+
+task.spawn(function()
+    local GC = getconnections or get_signal_cons
+    if GC then
+        for _, v in pairs(GC(plr.Idled)) do
+            if v.Disable then
+                v:Disable()
+            elseif v.Disconnect then
+                v:Disconnect()
+            end
+        end
+    else
+        local vu = cloneref(game:GetService("VirtualUser"))
+        plr.Idled:Connect(function()
+            vu:CaptureController()
+            vu:ClickButton2(Vector2.new())
+        end)
+    end
+end)
+
+local TweenService = game:GetService("TweenService")
+local speed = 40
+
+task.spawn(function()
+    while true do
+        if not map or not map.Parent then
+            for _, m in ipairs(game.Workspace:GetDescendants()) do
+                if m:IsA("Model") and m.Name == "CoinContainer" then
+                    map = m
+                    break
+                end
+            end
+        end
+
+        if map and map.Parent and humPart and humPart.Parent then
+            local closestCoin
+            local shortestDistance = math.huge
+
+            for _, coin in ipairs(map:GetChildren()) do
+                if coin:IsA("Part") and coin.Name == "Coin_Server" and coin:GetAttribute("CoinID") == "BeachBall" then
+                    local cv = coin:FindFirstChild("CoinVisual")
+                    if cv and cv.Transparency < 1 and coin.Position then
+                        local dist = (humPart.Position - coin.Position).Magnitude
+                        if dist < shortestDistance then
+                            shortestDistance = dist
+                            closestCoin = coin
+                        end
+                    end
+                end
+            end
+
+            if closestCoin and closestCoin.Position then
+                for _, p in pairs(character:GetChildren()) do
+                    if p:IsA("BasePart") and p.CanCollide then
+                        p.CanCollide = false
+                    end
+                end
+
+                local targetCFrame = CFrame.new(closestCoin.Position)
+                local distance = (humPart.Position - closestCoin.Position).Magnitude
+                local tweenTime = math.clamp(distance / speed, 0.05, 2)
+                local tweenInfo = TweenInfo.new(tweenTime, Enum.EasingStyle.Linear)
+                local tween = TweenService:Create(humPart, tweenInfo, {CFrame = targetCFrame})
+                tween:Play()
+                tween.Completed:Wait()
+                task.wait(0.05)
+            end
+        end
+
+        task.wait(0.05)
+    end
+end)
+
+w:Box("Farm Delay", function(num)
+    delay = tonumber(num) or 1
+end)
+
+w:Label("~ t.me/arceusxscripts", Color3.fromRGB(127, 143, 166))
